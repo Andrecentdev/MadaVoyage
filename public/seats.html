@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choix des sièges — Mada-Brousse 2.0</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="page-bg">
+
+<nav class="navbar">
+  <div class="container">
+    <a href="/" class="brand"><img src="/images/logo.svg" alt="" class="brand-logo" width="34" height="34">Mada<span class="dot">-</span>Brousse</a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/reservation">Réserver</a>
+      <a href="/sieges">Sièges</a>
+      <a href="/paiement">Paiement</a>
+      <a href="/confirmation">Confirmation</a>
+      <a href="/mes-reservations">Mes réservations</a>
+      <a href="/admin-login">Admin</a>
+    </div>
+    <div class="nav-tools">
+      <select class="lang-select" id="mb-lang-select">
+        <option value="fr">FR</option>
+        <option value="mg">MG</option>
+        <option value="en">EN</option>
+      </select>
+      <button class="icon-btn" id="mb-theme-toggle" title="Mode sombre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container" style="max-width:900px;">
+    <h1>Choisissez vos sièges</h1>
+    <div class="page-hero-img" style="height:110px; background-image:url('/images/illustrations/seats-bg.svg');">
+      <div class="page-hero-caption">Bus Sprinter — 22 places</div>
+    </div>
+    <p class="muted" id="seat-instructions"></p>
+    <div style="display:grid; grid-template-columns:340px 1fr; gap:30px;" id="seat-layout-wrap">
+      <div class="bus-plan">
+        <div class="driver-banner" id="driver-banner">
+          <div class="driver-avatar" id="driver-avatar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          </div>
+          <div>
+            <p class="driver-label">Votre chauffeur</p>
+            <p class="driver-name" id="driver-name">—</p>
+          </div>
+        </div>
+        <div class="seat-grid" id="seat-grid"></div>
+        <div class="legend">
+          <span><i style="background:var(--vert-clair)"></i> Disponible</span>
+          <span><i style="background:var(--laterite)"></i> Sélectionné</span>
+          <span><i style="background:#c65b3f"></i> Occupé</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="mt-0">Résumé</h3>
+        <p>Trajet : <strong id="sum-route"></strong></p>
+        <p>Places à choisir : <strong id="sum-count"></strong></p>
+        <p>Sièges sélectionnés : <strong id="sum-seats">Aucun</strong></p>
+        <button class="btn btn-primary btn-block mt-2" id="confirm-seats-btn" disabled>Confirmer et payer</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="mb-footer"></div>
+
+<script src="/js/app.js"></script>
+<script>
+  MB.initCommon();
+
+  const draft = MB.get(MB.KEYS.DRAFT, null);
+  if (!draft) { location.href = '/reservation'; }
+
+  MB.fetchTrips().then(trips => {
+    const trip = trips.find(t => t.id === draft.tripId);
+    if (!trip) { location.href = '/reservation'; return; }
+
+    document.getElementById('sum-route').textContent = `${trip.departure} → ${trip.destination}`;
+    document.getElementById('sum-count').textContent = draft.count;
+    document.getElementById('driver-name').textContent = trip.driver || 'Non attribué';
+    document.getElementById('seat-instructions').textContent =
+      `Sélectionnez exactement ${draft.count} siège(s).`;
+
+    if (trip.driver) {
+      fetch('/api/drivers').then(r => r.json()).then(drivers => {
+        const match = drivers.find(d => d.name === trip.driver);
+        if (match && match.photo_url) {
+          document.getElementById('driver-avatar').innerHTML =
+            `<img src="${match.photo_url}" alt="${trip.driver}">`;
+        }
+      }).catch(() => {});
+    }
+
+    let selected = MB.get(MB.KEYS.SEATS, []);
+
+    MB.fetchOccupiedSeats(draft.tripId).then(occupied => {
+      function renderSeats() {
+        const grid = document.getElementById('seat-grid');
+        grid.innerHTML = '';
+
+        // Rangée avant : seulement C1 et D1 (A1/B1 = place du chauffeur / porte)
+        const frontRow = document.createElement('div');
+        frontRow.className = 'seat-row front-row';
+        frontRow.appendChild(emptySeatPlaceholder());
+        frontRow.appendChild(emptySeatPlaceholder());
+        const aisleFront = document.createElement('div'); aisleFront.className = 'aisle';
+        frontRow.appendChild(aisleFront);
+        frontRow.appendChild(makeSeatButton('C1'));
+        frontRow.appendChild(makeSeatButton('D1'));
+        grid.appendChild(frontRow);
+
+        // Rangées 2 à 6 : A B | C D (20 sièges)
+        for (let row = 2; row <= 6; row++) {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'seat-row';
+          rowEl.appendChild(makeSeatButton('A' + row));
+          rowEl.appendChild(makeSeatButton('B' + row));
+          const aisle = document.createElement('div'); aisle.className = 'aisle';
+          rowEl.appendChild(aisle);
+          rowEl.appendChild(makeSeatButton('C' + row));
+          rowEl.appendChild(makeSeatButton('D' + row));
+          grid.appendChild(rowEl);
+        }
+
+        function emptySeatPlaceholder() {
+          const div = document.createElement('div');
+          div.className = 'seat seat-empty';
+          return div;
+        }
+
+        function makeSeatButton(code) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'seat';
+          btn.textContent = code;
+          btn.dataset.seat = code;
+          if (occupied.includes(code)) {
+            btn.classList.add('occupied');
+            btn.disabled = true;
+            btn.title = 'Siège occupé';
+          } else if (selected.includes(code)) {
+            btn.classList.add('selected');
+          }
+          btn.addEventListener('click', () => toggleSeat(code, btn));
+          return btn;
+        }
+
+        function toggleSeat(code, btn) {
+          if (selected.includes(code)) {
+            selected = selected.filter(s => s !== code);
+            btn.classList.remove('selected');
+          } else {
+            if (selected.length >= draft.count) {
+              alert(`Maximum ${draft.count} siège(s).`);
+              return;
+            }
+            selected.push(code);
+            btn.classList.add('selected');
+          }
+          MB.set(MB.KEYS.SEATS, selected);
+          updateSummary();
+        }
+
+        function updateSummary() {
+          document.getElementById('sum-seats').textContent = selected.length ? selected.join(', ') : 'Aucun';
+          document.getElementById('confirm-seats-btn').disabled = selected.length !== draft.count;
+        }
+
+        updateSummary();
+      }
+
+      renderSeats();
+    });
+
+    document.getElementById('confirm-seats-btn').addEventListener('click', () => {
+      if (selected.length !== draft.count) return;
+      location.href = '/paiement';
+    });
+  });
+
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-links a').forEach(link => {
+    if (link.getAttribute('href') === currentPath) link.classList.add('active');
+  });
+</script>
+</body>
+</html>

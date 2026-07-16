@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300">
+  <rect width="800" height="300" fill="#1f4a12"/>
+  <g fill="none" stroke="#b5502e" stroke-width="2" opacity=".55">
+    <rect x="30" y="40" width="220" height="110" rx="10"/>
+    <circle cx="140" cy="95" r="34"/>
+    <rect x="300" y="150" width="220" height="110" rx="10"/>
+    <circle cx="410" cy="205" r="34"/>
+    <rect x="560" y="30" width="220" height="110" rx="10"/>
+    <circle cx="670" cy="85" r="34"/>
+  </g>
+  <g fill="#d9a441" opacity=".85" font-family="Georgia, serif" font-size="26" font-weight="700">
+    <text x="120" y="102">Ar</text>
+    <text x="390" y="212">Ar</text>
+    <text x="650" y="92">Ar</text>
+  </g>
+</svg>

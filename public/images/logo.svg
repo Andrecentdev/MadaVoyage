@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Mada Voyage">
+  <defs>
+    <clipPath id="mv-left"><rect x="0" y="0" width="32" height="64"/></clipPath>
+    <clipPath id="mv-right"><rect x="32" y="0" width="32" height="64"/></clipPath>
+  </defs>
+  <g>
+    <path clip-path="url(#mv-left)" fill="#1c4d78" d="M32 8
+      C 20 10 10 20 8 32
+      C 6 42 10 50 18 55
+      C 23 58 28 58 32 55
+      L 32 8 Z"/>
+    <path clip-path="url(#mv-right)" fill="#e8c9a3" d="M32 8
+      C 44 10 54 20 56 32
+      C 58 42 54 50 46 55
+      C 41 58 36 58 32 55
+      L 32 8 Z"/>
+    <path d="M32 8 L32 55 M18 24 Q26 30 32 36 M46 24 Q38 30 32 36" stroke="#0f2f47" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".5"/>
+    <path d="M32 55 L29 62" stroke="#1c4d78" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mada-Brousse 2.0 — Accueil</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="/" class="brand"><img src="/images/logo.svg" alt="" class="brand-logo" width="34" height="34">Mada<span class="dot">-</span>Brousse</a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/reservation">Réserver</a>
+      <a href="/sieges">Sièges</a>
+      <a href="/paiement">Paiement</a>
+      <a href="/confirmation">Confirmation</a>
+      <a href="/mes-reservations">Mes réservations</a>
+      <a href="/admin-login">Admin</a>
+    </div>
+    <div class="nav-tools">
+      <button class="btn loyalty-btn btn-sm" id="loyalty-open-btn"></button>
+      <select class="lang-select" id="mb-lang-select">
+        <option value="fr">FR</option>
+        <option value="mg">MG</option>
+        <option value="en">EN</option>
+      </select>
+      <button class="icon-btn" id="mb-theme-toggle" title="Mode sombre">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="loyalty-modal-overlay" id="loyalty-modal-overlay">
+  <div class="loyalty-modal">
+    <button class="close-x" id="loyalty-close-btn" aria-label="Fermer">&times;</button>
+    <h3 class="mt-0">Programme client fidèle 🌟</h3>
+    <p class="muted">Inscrivez-vous et profitez d'avantages à chaque voyage :</p>
+    <ul>
+      <li>🎒 1 bagage gratuit tous les 5 trajets</li>
+      <li>💸 -10% automatique après votre 3ᵉ réservation</li>
+      <li>⏱️ Embarquement prioritaire</li>
+      <li>🎁 Code promo exclusif pour votre anniversaire</li>
+    </ul>
+    <form id="loyalty-form">
+      <div class="form-group">
+        <label for="loyalty-phone">Numéro de téléphone</label>
+        <input type="tel" id="loyalty-phone" placeholder="034 00 000 00" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Je m'inscris</button>
+    </form>
+  </div>
+</div>
+
+<!-- Le reste de la page (hero, trips, search…) identique à ta version actuelle -->
+<header class="hero">
+  <div class="container">
+    <span class="hero-eyebrow" id="hero-eyebrow"></span>
+    <h1 id="hero-title"></h1>
+    <p class="lead hero-phrase"><span class="hero-phrase-text" id="hero-phrase"></span></p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <a href="#departs" class="btn btn-primary" id="hero-cta"></a>
+      <a href="/mes-reservations" class="btn btn-ghost" id="hero-cta2"></a>
+    </div>
+  </div>
+  <svg class="hero-road" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 190 Q 100 40 290 60" stroke="#c97a4f" stroke-width="10" fill="none" stroke-dasharray="2 16" stroke-linecap="round"/>
+  </svg>
+</header>
+
+<section id="departs">
+  <div class="container">
+    <div class="section-title">
+      <div>
+        <h2 id="departs-title"></h2>
+        <p id="departs-sub"></p>
+      </div>
+    </div>
+    <div class="trips-grid" id="trips-grid"></div>
+  </div>
+</section>
+
+<section class="search-section" style="background:var(--creme-fonce);">
+  <div class="container">
+    <h2 id="search-title" class="mt-0"></h2>
+    <div class="card">
+      <form id="search-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="s-from" id="lbl-from"></label>
+            <input type="text" id="s-from" placeholder="Antananarivo" list="mb-destinations-list">
+          </div>
+          <div class="form-group">
+            <label for="s-to" id="lbl-to"></label>
+            <input type="text" id="s-to" placeholder="Toamasina" list="mb-destinations-list">
+          </div>
+          <datalist id="mb-destinations-list"></datalist>
+          <div class="form-group">
+            <label for="s-date" id="lbl-date"></label>
+            <input type="date" id="s-date">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="s-price" id="lbl-maxprice"></label>
+            <input type="number" id="s-price" placeholder="50000">
+          </div>
+          <div class="form-group">
+            <label for="s-sort" id="lbl-sort"></label>
+            <select id="s-sort">
+              <option value="price" id="opt-price"></option>
+              <option value="time" id="opt-time"></option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="search-btn"></button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="mb-footer"></div>
+
+<script src="/js/destinations.js"></script>
+<script src="/js/app.js"></script>
+<script>
+  MB.initCommon();
+
+  document.getElementById('mb-destinations-list').innerHTML =
+    MB_DESTINATIONS_FLAT.map(d => `<option value="${d}">`).join('');
+
+  document.getElementById('hero-eyebrow').textContent = MB.t('hero_eyebrow');
+  document.getElementById('hero-title').textContent = MB.t('hero_title');
+  document.getElementById('hero-cta').textContent = MB.t('hero_cta');
+  document.getElementById('hero-cta2').textContent = MB.t('hero_cta2');
+  document.getElementById('departs-title').textContent = MB.t('next_departures');
+  document.getElementById('departs-sub').textContent = MB.t('next_departures_sub');
+  document.getElementById('search-title').textContent = MB.t('search_title');
+  document.getElementById('lbl-from').textContent = MB.t('from_label');
+  document.getElementById('lbl-to').textContent = MB.t('to_label');
+  document.getElementById('lbl-date').textContent = MB.t('date_label');
+  document.getElementById('lbl-maxprice').textContent = MB.t('maxprice_label');
+  document.getElementById('lbl-sort').textContent = MB.t('sort_label');
+  document.getElementById('opt-price').textContent = MB.t('sort_price');
+  document.getElementById('opt-time').textContent = MB.t('sort_time');
+  document.getElementById('search-btn').textContent = MB.t('search_btn');
+  document.getElementById('loyalty-open-btn').textContent = '⭐ ' + MB.t('loyalty_btn');
+
+  // Texte d'accueil qui defile (5 phrases, change toutes les 6 secondes)
+  const heroPhrases = MB.t('hero_phrases');
+  const phraseList = Array.isArray(heroPhrases) ? heroPhrases : [MB.t('hero_lead')];
+  let phraseIndex = 0;
+  const phraseEl = document.getElementById('hero-phrase');
+  function showPhrase() {
+    phraseEl.textContent = phraseList[phraseIndex % phraseList.length];
+    phraseEl.classList.remove('hero-phrase-text');
+    void phraseEl.offsetWidth; // relance l'animation
+    phraseEl.classList.add('hero-phrase-text');
+    phraseIndex++;
+  }
+  showPhrase();
+  setInterval(showPhrase, 6000);
+
+  // Popup programme fidélité
+  const loyaltyOverlay = document.getElementById('loyalty-modal-overlay');
+  document.getElementById('loyalty-open-btn').addEventListener('click', () => loyaltyOverlay.classList.add('open'));
+  document.getElementById('loyalty-close-btn').addEventListener('click', () => loyaltyOverlay.classList.remove('open'));
+  loyaltyOverlay.addEventListener('click', e => { if (e.target === loyaltyOverlay) loyaltyOverlay.classList.remove('open'); });
+  document.getElementById('loyalty-form').addEventListener('submit', e => {
+    e.preventDefault();
+    alert('Merci ! Vous êtes inscrit au programme fidélité 🌟');
+    loyaltyOverlay.classList.remove('open');
+  });
+
+  function tripCardHTML(trip) {
+    return `
+      <div class="card trip-card">
+        ${trip.image_url ? `<img src="${trip.image_url}" alt="${trip.destination}" class="trip-card-img">` : ''}
+        <div class="trip-card-body">
+          <div class="trip-route">
+            <span class="city">${trip.departure}</span>
+            <span class="route-line"><svg class="route-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 20 20H4Z"/></svg></span>
+            <span class="city">${trip.destination}</span>
+          </div>
+          <div class="trip-meta">
+            <span>🕐 ${trip.departure_time}</span>
+            <span>⏳ ${trip.duration}</span>
+            <span>🚌 ${trip.driver}</span>
+          </div>
+          <div class="flex-between">
+            <div class="trip-price">${MB.formatAr(trip.price)}<small> / place</small></div>
+            <a href="/reservation?trip=${trip.id}" class="btn btn-primary btn-sm">${MB.t('book_btn')}</a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderTrips(list) {
+    document.getElementById('trips-grid').innerHTML = list.length
+      ? list.map(tripCardHTML).join('')
+      : '<div class="empty-state">Aucun trajet trouvé.</div>';
+  }
+
+  MB.fetchTrips().then(trips => {
+    window.allTrips = trips;
+    renderTrips(trips.slice(0, 3));
+  }).catch(() => {
+    document.getElementById('trips-grid').innerHTML = '<div class="empty-state">Erreur de chargement.</div>';
+  });
+
+  document.getElementById('search-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const from = document.getElementById('s-from').value.trim().toLowerCase();
+    const to = document.getElementById('s-to').value.trim().toLowerCase();
+    const maxPrice = parseFloat(document.getElementById('s-price').value) || Infinity;
+    const sort = document.getElementById('s-sort').value;
+
+    let filtered = (window.allTrips || []).filter(t =>
+      (!from || t.departure.toLowerCase().includes(from)) &&
+      (!to || t.destination.toLowerCase().includes(to)) &&
+      t.price <= maxPrice
+    );
+    filtered.sort((a, b) => sort === 'price' ? a.price - b.price : a.departure_time.localeCompare(b.departure_time));
+    renderTrips(filtered);
+    document.getElementById('departs').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Surbrillance du lien actif
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-links a').forEach(link => {
+    if (link.getAttribute('href') === currentPath) link.classList.add('active');
+  });
+</script>
+</body>
+</html>
