@@ -37,20 +37,12 @@
 <section>
   <div class="container" style="max-width:900px;">
     <h1>Choisissez vos sièges</h1>
-    <div class="page-hero-img" style="height:110px; background-image:url('/images/illustrations/seats-bg.svg');">
-      <div class="page-hero-caption">Bus Sprinter — 22 places</div>
-    </div>
     <p class="muted" id="seat-instructions"></p>
     <div style="display:grid; grid-template-columns:340px 1fr; gap:30px;" id="seat-layout-wrap">
       <div class="bus-plan">
-        <div class="driver-banner" id="driver-banner">
-          <div class="driver-avatar" id="driver-avatar">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-          </div>
-          <div>
-            <p class="driver-label">Votre chauffeur</p>
-            <p class="driver-name" id="driver-name">—</p>
-          </div>
+        <div class="bus-driver">
+          <span id="driver-name">Chauffeur</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
         </div>
         <div class="seat-grid" id="seat-grid"></div>
         <div class="legend">
@@ -79,90 +71,85 @@
   const draft = MB.get(MB.KEYS.DRAFT, null);
   if (!draft) { location.href = '/reservation'; }
 
-  MB.fetchTrips().then(trips => {
+  // Affiche un message d'erreur si le chargement échoue (ex : DB non connectée sur Render)
+  function showLoadError(msg) {
+    document.getElementById('seat-layout-wrap').innerHTML =
+      `<div class="card" style="color:#c0392b;padding:24px;">
+        <strong>⚠️ Erreur de chargement</strong><br>${msg}<br>
+        <a href="/reservation" class="btn btn-primary mt-2" style="display:inline-block;margin-top:12px;">Retour à la réservation</a>
+       </div>`;
+  }
+
+  MB.fetchTrips().catch(err => {
+    showLoadError('Impossible de contacter le serveur. Vérifiez que DATABASE_URL est bien configuré sur Render. (' + err.message + ')');
+    return null;
+  }).then(trips => {
+    if (!trips) return;
     const trip = trips.find(t => t.id === draft.tripId);
     if (!trip) { location.href = '/reservation'; return; }
 
     document.getElementById('sum-route').textContent = `${trip.departure} → ${trip.destination}`;
     document.getElementById('sum-count').textContent = draft.count;
-    document.getElementById('driver-name').textContent = trip.driver || 'Non attribué';
+    document.getElementById('driver-name').textContent = `Chauffeur : ${trip.driver}`;
     document.getElementById('seat-instructions').textContent =
       `Sélectionnez exactement ${draft.count} siège(s).`;
 
-    if (trip.driver) {
-      fetch('/api/drivers').then(r => r.json()).then(drivers => {
-        const match = drivers.find(d => d.name === trip.driver);
-        if (match && match.photo_url) {
-          document.getElementById('driver-avatar').innerHTML =
-            `<img src="${match.photo_url}" alt="${trip.driver}">`;
-        }
-      }).catch(() => {});
-    }
-
     let selected = MB.get(MB.KEYS.SEATS, []);
 
-    MB.fetchOccupiedSeats(draft.tripId).then(occupied => {
+    MB.fetchOccupiedSeats(draft.tripId).catch(() => []).then(occupied => {
       function renderSeats() {
         const grid = document.getElementById('seat-grid');
         grid.innerHTML = '';
-
-        // Rangée avant : seulement C1 et D1 (A1/B1 = place du chauffeur / porte)
-        const frontRow = document.createElement('div');
-        frontRow.className = 'seat-row front-row';
-        frontRow.appendChild(emptySeatPlaceholder());
-        frontRow.appendChild(emptySeatPlaceholder());
-        const aisleFront = document.createElement('div'); aisleFront.className = 'aisle';
-        frontRow.appendChild(aisleFront);
-        frontRow.appendChild(makeSeatButton('C1'));
-        frontRow.appendChild(makeSeatButton('D1'));
-        grid.appendChild(frontRow);
-
-        // Rangées 2 à 6 : A B | C D (20 sièges)
-        for (let row = 2; row <= 6; row++) {
+        let seatNum = 1;
+        for (let row = 0; row < 5; row++) {
           const rowEl = document.createElement('div');
           rowEl.className = 'seat-row';
-          rowEl.appendChild(makeSeatButton('A' + row));
-          rowEl.appendChild(makeSeatButton('B' + row));
-          const aisle = document.createElement('div'); aisle.className = 'aisle';
-          rowEl.appendChild(aisle);
-          rowEl.appendChild(makeSeatButton('C' + row));
-          rowEl.appendChild(makeSeatButton('D' + row));
+          for (let col = 0; col < 4; col++) {
+            if (col === 2) {
+              const aisle = document.createElement('div');
+              aisle.className = 'aisle';
+              rowEl.appendChild(aisle);
+            }
+            rowEl.appendChild(makeSeatButton(seatNum));
+            seatNum++;
+          }
           grid.appendChild(rowEl);
         }
+        const backRow = document.createElement('div');
+        backRow.className = 'seat-row back-row';
+        backRow.appendChild(makeSeatButton(seatNum++));
+        const aisle2 = document.createElement('div'); aisle2.className = 'aisle';
+        backRow.appendChild(aisle2);
+        backRow.appendChild(makeSeatButton(seatNum++));
+        grid.appendChild(backRow);
 
-        function emptySeatPlaceholder() {
-          const div = document.createElement('div');
-          div.className = 'seat seat-empty';
-          return div;
-        }
-
-        function makeSeatButton(code) {
+        function makeSeatButton(num) {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'seat';
-          btn.textContent = code;
-          btn.dataset.seat = code;
-          if (occupied.includes(code)) {
+          btn.textContent = num;
+          btn.dataset.seat = num;
+          if (occupied.includes(num)) {
             btn.classList.add('occupied');
             btn.disabled = true;
             btn.title = 'Siège occupé';
-          } else if (selected.includes(code)) {
+          } else if (selected.includes(num)) {
             btn.classList.add('selected');
           }
-          btn.addEventListener('click', () => toggleSeat(code, btn));
+          btn.addEventListener('click', () => toggleSeat(num, btn));
           return btn;
         }
 
-        function toggleSeat(code, btn) {
-          if (selected.includes(code)) {
-            selected = selected.filter(s => s !== code);
+        function toggleSeat(num, btn) {
+          if (selected.includes(num)) {
+            selected = selected.filter(s => s !== num);
             btn.classList.remove('selected');
           } else {
             if (selected.length >= draft.count) {
               alert(`Maximum ${draft.count} siège(s).`);
               return;
             }
-            selected.push(code);
+            selected.push(num);
             btn.classList.add('selected');
           }
           MB.set(MB.KEYS.SEATS, selected);

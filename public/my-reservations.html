@@ -37,7 +37,6 @@
 <section>
   <div class="container">
     <h1>Mes réservations</h1>
-    <div id="messages-wrap"></div>
     <div id="res-list"></div>
   </div>
 </section>
@@ -48,19 +47,7 @@
 <script>
   MB.initCommon();
 
-  const myPhone = localStorage.getItem('mb_customer_phone');
-  if (myPhone) {
-    MB.fetchMessages(myPhone).then(messages => {
-      const wrap = document.getElementById('messages-wrap');
-      wrap.innerHTML = messages.slice(0, 5).map(m => `<div class="message-banner">💬 ${m.message}</div>`).join('');
-    }).catch(() => {});
-  }
-
-  const statusLabels = { confirmed: 'Confirmée', pending: 'En attente', cancelled: 'Annulée' };
-  const statusBadge = { confirmed: 'badge-confirmed', pending: 'badge-pending', cancelled: 'badge-cancelled' };
-
-  Promise.all([MB.fetchReservations(), MB.fetchTrips()]).then(([allReservations, trips]) => {
-    const reservations = myPhone ? allReservations.filter(r => r.customer_phone === myPhone) : allReservations;
+  MB.fetchReservations().then(reservations => {
     const wrap = document.getElementById('res-list');
     if (!reservations.length) {
       wrap.innerHTML = '<div class="empty-state">Aucune réservation. <a href="/">Réservez un trajet</a>.</div>';
@@ -70,16 +57,15 @@
       <div class="card mt-2" data-id="${r.id}">
         <div class="flex-between">
           <div>
-            <strong>${r.id}</strong>
-            <span class="badge ${statusBadge[r.status] || 'badge-pending'}">${statusLabels[r.status] || r.status}</span>
+            <strong>${r.id}</strong> 
+            <span class="badge ${r.status==='confirmed'?'badge-confirmed':'badge-cancelled'}">${r.status}</span>
             <p>${r.customer_name} — Trajet ${r.trip_id} — Sièges ${r.selected_seats}</p>
             <p class="muted">Total : ${MB.formatAr(r.total)}</p>
           </div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <div style="display:flex; gap:10px; margin-top:10px;">
           <button class="btn btn-secondary btn-sm print-one">Imprimer</button>
-          ${r.status==='confirmed' ? `<button class="btn btn-primary btn-sm ticket-one">⬇️ Télécharger le ticket</button>` : ''}
-          ${r.status!=='cancelled' ? `<button class="btn btn-danger btn-sm cancel-one">Annuler</button>` : ''}
+          ${r.status==='confirmed' ? `<button class="btn btn-danger btn-sm cancel-one">Annuler</button>` : ''}
         </div>
       </div>
     `).join('');
@@ -93,26 +79,6 @@
       });
     });
     wrap.querySelectorAll('.print-one').forEach(btn => btn.addEventListener('click', () => window.print()));
-    wrap.querySelectorAll('.ticket-one').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const id = e.target.closest('[data-id]').dataset.id;
-        const resv = reservations.find(r => r.id === id);
-        const trip = trips.find(t => t.id === resv.trip_id);
-        const lines = [
-          'MADA VOYAGE — TICKET DE RESERVATION', '======================================',
-          `N° réservation : ${resv.id}`, `Statut : ${resv.status}`,
-          trip ? `Trajet : ${trip.departure} -> ${trip.destination}` : '',
-          trip ? `Départ : ${trip.departure_time} (${trip.duration})` : '',
-          `Client : ${resv.customer_name}`, `Sièges : ${resv.selected_seats}`,
-          `Total : ${MB.formatAr(resv.total)}`, '======================================'
-        ].filter(Boolean).join('\n');
-        const blob = new Blob([lines], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `ticket-${resv.id}.txt`;
-        a.click();
-      });
-    });
   });
 
   const currentPath = window.location.pathname;

@@ -36,21 +36,16 @@
 
 <section>
   <div class="container text-center" style="max-width:500px;">
-    <div class="page-hero-img" style="height:160px; background-image:url('/images/illustrations/confirmation-bg.svg'); background-color:#f9f6f0;">
-    </div>
+    <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="var(--vert-fonce)" stroke-width="1.6" style="margin:0 auto;"><circle cx="12" cy="12" r="10" fill="rgba(74,124,46,.12)"/><path d="M7.5 12.5 10.5 15.5 16.5 8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h2 class="mt-3">Réservation confirmée !</h2>
-    <p class="muted" id="status-note"></p>
-    <div class="card mt-2">
+    <div class="card p-4 mt-4">
       <h5>N° <span id="reservation-id"></span></h5>
-      <div id="qrcode" class="mt-2 mb-2">
-        <canvas id="qrCanvas" width="150" height="150" style="margin:0 auto; display:block;"></canvas>
+      <div id="qrcode" class="my-3">
+        <canvas id="qrCanvas" width="150" height="150"></canvas>
       </div>
-      <p class="muted" style="font-size:.85rem;">Scannez à l'embarquement</p>
-      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px;">
-        <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimer</button>
-        <button class="btn btn-primary btn-sm" id="download-ticket-btn">⬇️ Télécharger le ticket</button>
-        <a href="/mes-reservations" class="btn btn-ghost btn-sm" style="color:var(--vert-fonce); border-color:var(--vert-fonce);">Mes réservations</a>
-      </div>
+      <p class="small text-muted">Scannez à l'embarquement</p>
+      <button class="btn btn-success m-1" onclick="window.print()">Imprimer</button>
+      <a href="/mes-reservations" class="btn btn-outline-success m-1">Mes réservations</a>
     </div>
   </div>
 </section>
@@ -71,43 +66,6 @@
       ctx.fillStyle = '#fff';
       ctx.fillRect(45, 45, 60, 60);
     }
-
-    Promise.all([MB.fetchReservations(), MB.fetchTrips()]).then(([reservations, trips]) => {
-      const resv = reservations.find(r => r.id === resId);
-      if (!resv) return;
-      const trip = trips.find(t => t.id === resv.trip_id);
-
-      const statusText = {
-        pending: "⏳ En attente de confirmation par notre équipe. Vous recevrez un message une fois validée.",
-        confirmed: "✅ Votre réservation est confirmée.",
-        cancelled: "❌ Cette réservation a été annulée."
-      };
-      document.getElementById('status-note').textContent = statusText[resv.status] || '';
-
-      document.getElementById('download-ticket-btn').addEventListener('click', () => {
-        const lines = [
-          'MADA VOYAGE — TICKET DE RESERVATION',
-          '======================================',
-          `N° réservation : ${resv.id}`,
-          `Statut : ${resv.status}`,
-          trip ? `Trajet : ${trip.departure} -> ${trip.destination}` : '',
-          trip ? `Départ : ${trip.departure_time} (${trip.duration})` : '',
-          trip ? `Chauffeur : ${trip.driver || 'non attribué'}` : '',
-          `Client : ${resv.customer_name}`,
-          `Téléphone : ${resv.customer_phone || ''}`,
-          `Sièges : ${resv.selected_seats}`,
-          resv.travel_date ? `Date de voyage : ${resv.travel_date}` : '',
-          `Total : ${MB.formatAr(resv.total)}`,
-          '======================================',
-          'Merci de voyager avec Mada Voyage !'
-        ].filter(Boolean).join('\n');
-        const blob = new Blob([lines], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `ticket-${resv.id}.txt`;
-        a.click();
-      });
-    }).catch(() => {});
   }
   const currentPath = window.location.pathname;
   document.querySelectorAll('.nav-links a').forEach(link => {

@@ -37,9 +37,6 @@
 <section>
   <div class="container" style="max-width:760px;">
     <h1>Réserver votre trajet</h1>
-    <div class="page-hero-img" style="height:150px; background-image:url('/images/illustrations/reservation-bg.svg');">
-      <div class="page-hero-caption">Réservez votre trajet en toute confiance</div>
-    </div>
     <div class="card trip-recap-card" id="trip-recap-card" style="display:none;">
       <img id="trip-recap-img" alt="" class="trip-recap-img">
       <div>
@@ -66,18 +63,19 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="r-count">Nombre de places (max 22)</label>
-            <select id="r-count"></select>
+            <label for="r-count">Nombre de places</label>
+            <select id="r-count">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="r-luggage">Bagages supplémentaires (5000 Ar / unité)</label>
             <input type="number" id="r-luggage" min="0" value="0">
           </div>
-        </div>
-        <div class="form-group">
-          <label for="r-date">Date de voyage (réservation à l'avance)</label>
-          <input type="date" id="r-date">
-          <p class="help-text">Choisissez une date future pour réserver votre place à l'avance.</p>
         </div>
         <div class="form-group">
           <label for="r-promo">Code promo (optionnel)</label>
@@ -96,16 +94,6 @@
 <script>
   MB.initCommon();
 
-  // Nombre de places : de 1 a 22 (capacite totale du bus)
-  const countSelect = document.getElementById('r-count');
-  for (let i = 1; i <= 22; i++) {
-    const opt = document.createElement('option');
-    opt.value = i; opt.textContent = i;
-    countSelect.appendChild(opt);
-  }
-  const dateInput = document.getElementById('r-date');
-  dateInput.min = new Date().toISOString().slice(0, 10);
-
   const params = new URLSearchParams(location.search);
   let tripId = params.get('trip');
 
@@ -115,14 +103,6 @@
 
     document.getElementById('trip-recap').innerHTML =
       `<strong>${trip.departure} &rarr; ${trip.destination}</strong> — départ ${trip.departure_time}, durée ${trip.duration} — ${MB.formatAr(trip.price)} / place`;
-    document.getElementById('trip-recap-driver').textContent = trip.driver ? `Chauffeur : ${trip.driver}` : '';
-
-    if (trip.image_url) {
-      document.getElementById('trip-recap-img').src = trip.image_url;
-      document.getElementById('trip-recap-card').style.display = 'flex';
-    } else {
-      document.getElementById('trip-recap-fallback').innerHTML = document.getElementById('trip-recap').innerHTML;
-    }
 
     const draft = MB.get(MB.KEYS.DRAFT, null);
     if (draft && draft.tripId === tripId) {
@@ -131,7 +111,6 @@
       document.getElementById('r-email').value = draft.email || '';
       document.getElementById('r-count').value = draft.count || 1;
       document.getElementById('r-luggage').value = draft.luggage || 0;
-      document.getElementById('r-date').value = draft.travelDate || '';
       document.getElementById('r-promo').value = draft.promo || '';
     }
 
@@ -144,7 +123,6 @@
         email: document.getElementById('r-email').value.trim(),
         count: parseInt(document.getElementById('r-count').value, 10),
         luggage: parseInt(document.getElementById('r-luggage').value, 10) || 0,
-        travelDate: document.getElementById('r-date').value || null,
         promo: document.getElementById('r-promo').value.trim()
       };
       MB.set(MB.KEYS.DRAFT, draft);

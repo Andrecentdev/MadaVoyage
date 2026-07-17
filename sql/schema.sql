@@ -10,14 +10,13 @@ CREATE TABLE IF NOT EXISTS trips (
   driver VARCHAR(100),
   price NUMERIC(10,2) NOT NULL,
   image_url VARCHAR(255),
-  active BOOLEAN NOT NULL DEFAULT true,
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  active BOOLEAN NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS occupied_seats (
   id SERIAL PRIMARY KEY,
   trip_id VARCHAR(20) NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-  seat_number VARCHAR(10) NOT NULL
+  seat_number INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS reservations (
@@ -28,24 +27,13 @@ CREATE TABLE IF NOT EXISTS reservations (
   customer_email VARCHAR(150),
   seats_count INTEGER NOT NULL,
   luggage INTEGER DEFAULT 0,
-  selected_seats VARCHAR(150) NOT NULL,
+  selected_seats VARCHAR(100) NOT NULL,
   payment_method VARCHAR(30),
   total NUMERIC(10,2) NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
   insurance BOOLEAN DEFAULT false,
   promo_code VARCHAR(30),
-  travel_date DATE,
   review INTEGER,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
--- Messagerie : notifications envoyées au client (ex. confirmation de réservation par l'admin)
-CREATE TABLE IF NOT EXISTS messages (
-  id SERIAL PRIMARY KEY,
-  reservation_id VARCHAR(20) NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
-  customer_phone VARCHAR(30),
-  message TEXT NOT NULL,
-  read BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

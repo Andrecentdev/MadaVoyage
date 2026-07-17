@@ -15,7 +15,6 @@
     <div class="brand"><img src="/images/logo.svg" alt="" class="brand-logo" width="30" height="30">Mada<span class="dot">-</span>Brousse</div>
     <a href="#" class="active" data-tab="dashboard">📊 Tableau de bord</a>
     <a href="#" data-tab="reservations">🎟️ Réservations</a>
-    <a href="#" data-tab="journal">🧾 Journal de bord</a>
     <a href="#" data-tab="trips">🗺️ Trajets</a>
     <a href="#" data-tab="drivers">🚌 Chauffeurs</a>
     <a href="#" data-tab="clients">👤 Clients</a>
@@ -61,7 +60,6 @@
         <div class="toolbar">
           <select id="filter-status">
             <option value="">Tous les statuts</option>
-            <option value="pending">En attente</option>
             <option value="confirmed">Confirmée</option>
             <option value="cancelled">Annulée</option>
           </select>
@@ -70,23 +68,7 @@
         </div>
         <div style="overflow-x:auto;">
           <table id="res-table">
-            <thead><tr><th>ID</th><th>Client</th><th>Trajet</th><th>Sièges</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-panel" id="tab-journal">
-      <div class="card">
-        <div class="journal-toolbar">
-          <h3 class="mt-0" style="margin-bottom:0;">Journal de bord</h3>
-          <button class="btn btn-secondary btn-sm" id="print-journal-btn">🖨️ Imprimer</button>
-        </div>
-        <p class="muted">Qui est monté, sur quel trajet, à quelle heure, avec quel chauffeur.</p>
-        <div style="overflow-x:auto;">
-          <table id="journal-table">
-            <thead><tr><th>Heure</th><th>Trajet</th><th>Chauffeur</th><th>Client</th><th>Téléphone</th><th>Sièges</th><th>Statut</th></tr></thead>
+            <thead><tr><th>ID</th><th>Client</th><th>Trajet</th><th>Sièges</th><th>Total</th><th>Statut</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -100,11 +82,11 @@
           <div class="form-row">
             <div class="form-group">
               <label for="t-departure">Départ</label>
-              <select id="t-departure" required></select>
+              <input type="text" id="t-departure" placeholder="Antananarivo" required>
             </div>
             <div class="form-group">
               <label for="t-destination">Destination</label>
-              <select id="t-destination" required></select>
+              <input type="text" id="t-destination" placeholder="Toamasina" required>
             </div>
           </div>
           <div class="form-row">
@@ -136,7 +118,7 @@
       <div class="card mt-2">
         <div style="overflow-x:auto;">
           <table id="trips-table">
-            <thead><tr><th>Photo</th><th>Trajet</th><th>Heure</th><th>Prix</th><th>Chauffeur</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Photo</th><th>Trajet</th><th>Heure</th><th>Prix</th><th>Chauffeur</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -222,7 +204,6 @@
   </main>
 </div>
 
-<script src="/js/destinations.js"></script>
 <script src="/js/app.js"></script>
 <script>
   if (localStorage.getItem(MB.KEYS.ADMIN) !== 'true') location.href = '/admin-login';
@@ -234,16 +215,6 @@
     location.href = '/admin-login';
   });
 
-  // Remplit les selects Départ / Destination groupés par région
-  function fillDestinationSelect(select) {
-    select.innerHTML = '<option value="">— Sélectionner —</option>' +
-      Object.entries(MB_DESTINATIONS).map(([region, cities]) =>
-        `<optgroup label="${region}">${cities.map(c => `<option value="${c}">${c}</option>`).join('')}</optgroup>`
-      ).join('');
-  }
-  fillDestinationSelect(document.getElementById('t-departure'));
-  fillDestinationSelect(document.getElementById('t-destination'));
-
   // Navigation par onglets
   document.querySelectorAll('.admin-side a[data-tab]').forEach(link => {
     link.addEventListener('click', e => {
@@ -252,7 +223,6 @@
       link.classList.add('active');
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-' + link.dataset.tab).classList.add('active');
-      if (link.dataset.tab === 'journal') loadJournal();
     });
   });
 
@@ -294,34 +264,13 @@
     });
 
     function renderTable(filtered) {
-      const statusLabels = { confirmed: 'Confirmée', pending: 'En attente', cancelled: 'Annulée' };
       const tbody = document.querySelector('#res-table tbody');
       tbody.innerHTML = filtered.map(r => `
-        <tr data-id="${r.id}">
+        <tr>
           <td>${r.id}</td><td>${r.customer_name}</td><td>${r.trip_id}</td>
           <td>${r.selected_seats}</td><td>${MB.formatAr(r.total)}</td>
-          <td><span class="badge ${r.status==='confirmed'?'badge-confirmed':r.status==='pending'?'badge-pending':'badge-cancelled'}">${statusLabels[r.status] || r.status}</span></td>
-          <td style="white-space:nowrap;">
-            ${r.status!=='confirmed' ? `<button class="btn btn-secondary btn-sm" data-action="confirmed" title="Confirmer">✅</button>` : ''}
-            ${r.status!=='pending' ? `<button class="btn btn-secondary btn-sm" data-action="pending" title="Mettre en attente">⏳</button>` : ''}
-            ${r.status!=='cancelled' ? `<button class="btn btn-secondary btn-sm" data-action="cancelled" title="Annuler">🚫</button>` : ''}
-            <button class="btn btn-danger btn-sm" data-action="delete" title="Supprimer">🗑️</button>
-          </td>
-        </tr>`).join('') || '<tr><td colspan="7" class="muted">Aucun résultat</td></tr>';
-
-      tbody.querySelectorAll('button[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.closest('tr').dataset.id;
-          const action = btn.dataset.action;
-          if (action === 'delete') {
-            if (confirm(`Supprimer définitivement la réservation ${id} ?`)) {
-              MB.deleteReservation(id).then(() => MB.fetchReservations().then(rs => { reservations = rs; renderTable(reservations); }));
-            }
-          } else {
-            MB.updateReservationStatus(id, action).then(() => MB.fetchReservations().then(rs => { reservations = rs; renderTable(reservations); }));
-          }
-        });
-      });
+          <td><span class="badge ${r.status==='confirmed'?'badge-confirmed':'badge-cancelled'}">${r.status}</span></td>
+        </tr>`).join('') || '<tr><td colspan="6" class="muted">Aucun résultat</td></tr>';
     }
     renderTable(reservations);
 
@@ -368,24 +317,11 @@
         <tr>
           <td>${t.image_url ? `<img class="trip-thumb" src="${t.image_url}" alt="">` : '—'}</td>
           <td>${t.departure} → ${t.destination}</td>
-          <td>${t.departure_time || ''} <span class="muted" style="font-size:.8rem;">(${t.duration || '—'})</span></td>
+          <td>${t.departure_time || ''}</td>
           <td>${MB.formatAr(t.price)}</td>
           <td>${t.driver || '—'}</td>
-          <td style="white-space:nowrap;">
-            <button type="button" class="btn btn-secondary btn-sm" data-edit="${t.id}" data-time="${t.departure_time || ''}" data-duration="${t.duration || ''}">🕐 Modifier horaires</button>
-            <button type="button" class="btn btn-danger btn-sm" data-deactivate="${t.id}">Désactiver</button>
-          </td>
+          <td><button type="button" class="btn btn-danger btn-sm" data-deactivate="${t.id}">Désactiver</button></td>
         </tr>`).join('') || '<tr><td colspan="6" class="muted">Aucun trajet</td></tr>';
-
-      tbody.querySelectorAll('[data-edit]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const newTime = prompt('Nouvelle heure de départ (HH:MM) :', btn.dataset.time);
-          if (newTime === null) return;
-          const newDuration = prompt('Nouvelle durée (ex: 6h) :', btn.dataset.duration);
-          if (newDuration === null) return;
-          MB.updateTripTime(btn.dataset.edit, { departure_time: newTime, duration: newDuration }).then(loadTrips);
-        });
-      });
 
       tbody.querySelectorAll('[data-deactivate]').forEach(btn => {
         btn.addEventListener('click', () => MB.deactivateTrip(btn.dataset.deactivate).then(loadTrips));
@@ -477,24 +413,6 @@
     }).catch(err => alert(err.message));
   });
   loadCustomers();
-
-  // ---------- Onglet Journal de bord ----------
-  function loadJournal() {
-    MB.fetchJournal().then(entries => {
-      const statusLabels = { confirmed: 'Confirmée', pending: 'En attente', cancelled: 'Annulée' };
-      document.querySelector('#journal-table tbody').innerHTML = entries.map(e => `
-        <tr>
-          <td>${e.departure_time || '—'}</td>
-          <td>${e.departure} → ${e.destination}</td>
-          <td>${e.driver || '—'}</td>
-          <td>${e.customer_name}</td>
-          <td>${e.customer_phone || '—'}</td>
-          <td>${e.selected_seats}</td>
-          <td><span class="badge ${e.status==='confirmed'?'badge-confirmed':e.status==='pending'?'badge-pending':'badge-cancelled'}">${statusLabels[e.status] || e.status}</span></td>
-        </tr>`).join('') || '<tr><td colspan="7" class="muted">Aucune entrée</td></tr>';
-    });
-  }
-  document.getElementById('print-journal-btn').addEventListener('click', () => window.print());
 </script>
 </body>
 </html>

@@ -10,15 +10,7 @@ const MB = (function () {
       hero_eyebrow: 'Voyagez à travers Madagascar',
       hero_title: 'La brousse malgache, à portée de billet',
       hero_lead: 'Réservez votre taxi-brousse en quelques clics.',
-      hero_phrases: [
-        'Bienvenue sur Mada Voyage 🌿',
-        'Toute l\'île, un seul clic pour réserver.',
-        'Des chauffeurs de confiance, des trajets sûrs.',
-        'Voyagez sereinement, on s\'occupe du reste.',
-        'Merci de faire confiance à Mada Voyage 🙏'
-      ],
       hero_cta: 'Voir les départs', hero_cta2: 'Mes réservations',
-      loyalty_btn: 'Devenir client fidèle',
       next_departures: 'Prochains départs', next_departures_sub: 'Les trajets les plus demandés',
       book_btn: 'Réserver', search_title: 'Rechercher un trajet',
       from_label: 'Départ', to_label: 'Arrivée', date_label: 'Date', maxprice_label: 'Prix max (Ar)',
@@ -29,15 +21,7 @@ const MB = (function () {
       hero_eyebrow: 'Mandehana manerana an\'i Madagasikara',
       hero_title: 'Ny taxi-brousse malagasy, eo an-tananao',
       hero_lead: 'Mamandrika ny taxi-brousse anao amin\'ny fikitihana vitsivitsy.',
-      hero_phrases: [
-        'Tongasoa eto amin\'ny Mada Voyage 🌿',
-        'Ny nosy manontolo, indray fikitihana ihany.',
-        'Mpamily azo itokisana, dia azo antoka.',
-        'Mandehana am-pilaminana, izahay no miandraikitra ny sisa.',
-        'Misaotra fa matoky ny Mada Voyage 🙏'
-      ],
       hero_cta: 'Jereo ny fandehanana', hero_cta2: 'Ny famandrihako',
-      loyalty_btn: 'Ho mpanjifa tsy mivadika',
       next_departures: 'Fandehanana ho avy', next_departures_sub: 'Ireo diabe be mpitady',
       book_btn: 'Mamandrika', search_title: 'Mitady dia',
       from_label: 'Niaingana', to_label: 'Halehana', date_label: 'Daty', maxprice_label: 'Vidiny ambony (Ar)',
@@ -48,15 +32,7 @@ const MB = (function () {
       hero_eyebrow: 'Travel across Madagascar',
       hero_title: 'Madagascar\'s bush taxis, one ticket away',
       hero_lead: 'Book your taxi-brousse in a few clicks.',
-      hero_phrases: [
-        'Welcome to Mada Voyage 🌿',
-        'The whole island, one click away.',
-        'Trusted drivers, safe journeys.',
-        'Travel with peace of mind, we handle the rest.',
-        'Thank you for trusting Mada Voyage 🙏'
-      ],
       hero_cta: 'See departures', hero_cta2: 'My bookings',
-      loyalty_btn: 'Become a loyal customer',
       next_departures: 'Upcoming departures', next_departures_sub: 'Most requested routes',
       book_btn: 'Book', search_title: 'Search a route',
       from_label: 'From', to_label: 'To', date_label: 'Date', maxprice_label: 'Max price (Ar)',
@@ -93,33 +69,8 @@ const MB = (function () {
     const res = await fetch('/api/reservations');
     return res.json();
   }
-  async function updateReservationStatus(id, status) {
-    const res = await fetch(`/api/reservations/${id}/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
-    });
-    return res.json();
-  }
-  async function cancelReservation(id) { return updateReservationStatus(id, 'cancelled'); }
-  async function deleteReservation(id) {
-    const res = await fetch(`/api/admin/reservations/${id}`, { method: 'DELETE' });
-    return res.json();
-  }
-  async function fetchMessages(phone) {
-    const res = await fetch(`/api/messages/${encodeURIComponent(phone)}`);
-    return res.json();
-  }
-  async function fetchJournal() {
-    const res = await fetch('/api/admin/journal');
-    return res.json();
-  }
-  async function updateTripTime(id, data) {
-    const res = await fetch(`/api/admin/trips/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+  async function cancelReservation(id) {
+    const res = await fetch(`/api/reservations/${id}/cancel`, { method: 'PUT' });
     return res.json();
   }
   async function adminLogin(username, password) {
@@ -191,26 +142,9 @@ const MB = (function () {
     applyTheme();
   }
 
-  // Bannière "hors connexion" — le site a besoin d'internet pour parler à la base de données
-  function initOfflineBanner() {
-    let banner = document.getElementById('mb-offline-banner');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'mb-offline-banner';
-      banner.className = 'offline-banner';
-      banner.textContent = "⚠️ Aucune connexion internet — certaines fonctions sont indisponibles.";
-      document.body.prepend(banner);
-    }
-    function update() { banner.classList.toggle('show', !navigator.onLine); }
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
-    update();
-  }
-
   // Initialisation commune : thème, footer, sélecteur de langue (s'il existe)
   function initCommon() {
     applyTheme();
-    initOfflineBanner();
     const langSelect = document.getElementById('mb-lang-select');
     if (langSelect) {
       langSelect.value = getLang();
@@ -306,7 +240,6 @@ const MB = (function () {
   return {
     KEYS, get, set, getLang, setLang, t, formatAr,
     fetchTrips, fetchOccupiedSeats, createReservation, fetchReservations, cancelReservation,
-    updateReservationStatus, deleteReservation, fetchMessages, fetchJournal, updateTripTime,
     adminLogin, fetchPromos, fetchDrivers, fetchDestinationImages, createTrip, deactivateTrip,
     createDriver, createCustomer, fetchCustomers,
     applyTheme, toggleTheme, initCommon, initChat

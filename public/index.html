@@ -22,7 +22,6 @@
       <a href="/admin-login">Admin</a>
     </div>
     <div class="nav-tools">
-      <button class="btn loyalty-btn btn-sm" id="loyalty-open-btn"></button>
       <select class="lang-select" id="mb-lang-select">
         <option value="fr">FR</option>
         <option value="mg">MG</option>
@@ -35,33 +34,12 @@
   </div>
 </nav>
 
-<div class="loyalty-modal-overlay" id="loyalty-modal-overlay">
-  <div class="loyalty-modal">
-    <button class="close-x" id="loyalty-close-btn" aria-label="Fermer">&times;</button>
-    <h3 class="mt-0">Programme client fidèle 🌟</h3>
-    <p class="muted">Inscrivez-vous et profitez d'avantages à chaque voyage :</p>
-    <ul>
-      <li>🎒 1 bagage gratuit tous les 5 trajets</li>
-      <li>💸 -10% automatique après votre 3ᵉ réservation</li>
-      <li>⏱️ Embarquement prioritaire</li>
-      <li>🎁 Code promo exclusif pour votre anniversaire</li>
-    </ul>
-    <form id="loyalty-form">
-      <div class="form-group">
-        <label for="loyalty-phone">Numéro de téléphone</label>
-        <input type="tel" id="loyalty-phone" placeholder="034 00 000 00" required>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">Je m'inscris</button>
-    </form>
-  </div>
-</div>
-
 <!-- Le reste de la page (hero, trips, search…) identique à ta version actuelle -->
 <header class="hero">
   <div class="container">
     <span class="hero-eyebrow" id="hero-eyebrow"></span>
     <h1 id="hero-title"></h1>
-    <p class="lead hero-phrase"><span class="hero-phrase-text" id="hero-phrase"></span></p>
+    <p class="lead" id="hero-lead"></p>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
       <a href="#departs" class="btn btn-primary" id="hero-cta"></a>
       <a href="/mes-reservations" class="btn btn-ghost" id="hero-cta2"></a>
@@ -84,7 +62,7 @@
   </div>
 </section>
 
-<section class="search-section" style="background:var(--creme-fonce);">
+<section style="background:var(--creme-fonce);">
   <div class="container">
     <h2 id="search-title" class="mt-0"></h2>
     <div class="card">
@@ -92,13 +70,12 @@
         <div class="form-row">
           <div class="form-group">
             <label for="s-from" id="lbl-from"></label>
-            <input type="text" id="s-from" placeholder="Antananarivo" list="mb-destinations-list">
+            <input type="text" id="s-from" placeholder="Antananarivo">
           </div>
           <div class="form-group">
             <label for="s-to" id="lbl-to"></label>
-            <input type="text" id="s-to" placeholder="Toamasina" list="mb-destinations-list">
+            <input type="text" id="s-to" placeholder="Toamasina">
           </div>
-          <datalist id="mb-destinations-list"></datalist>
           <div class="form-group">
             <label for="s-date" id="lbl-date"></label>
             <input type="date" id="s-date">
@@ -125,16 +102,13 @@
 
 <div id="mb-footer"></div>
 
-<script src="/js/destinations.js"></script>
 <script src="/js/app.js"></script>
 <script>
   MB.initCommon();
 
-  document.getElementById('mb-destinations-list').innerHTML =
-    MB_DESTINATIONS_FLAT.map(d => `<option value="${d}">`).join('');
-
   document.getElementById('hero-eyebrow').textContent = MB.t('hero_eyebrow');
   document.getElementById('hero-title').textContent = MB.t('hero_title');
+  document.getElementById('hero-lead').textContent = MB.t('hero_lead');
   document.getElementById('hero-cta').textContent = MB.t('hero_cta');
   document.getElementById('hero-cta2').textContent = MB.t('hero_cta2');
   document.getElementById('departs-title').textContent = MB.t('next_departures');
@@ -148,33 +122,6 @@
   document.getElementById('opt-price').textContent = MB.t('sort_price');
   document.getElementById('opt-time').textContent = MB.t('sort_time');
   document.getElementById('search-btn').textContent = MB.t('search_btn');
-  document.getElementById('loyalty-open-btn').textContent = '⭐ ' + MB.t('loyalty_btn');
-
-  // Texte d'accueil qui defile (5 phrases, change toutes les 6 secondes)
-  const heroPhrases = MB.t('hero_phrases');
-  const phraseList = Array.isArray(heroPhrases) ? heroPhrases : [MB.t('hero_lead')];
-  let phraseIndex = 0;
-  const phraseEl = document.getElementById('hero-phrase');
-  function showPhrase() {
-    phraseEl.textContent = phraseList[phraseIndex % phraseList.length];
-    phraseEl.classList.remove('hero-phrase-text');
-    void phraseEl.offsetWidth; // relance l'animation
-    phraseEl.classList.add('hero-phrase-text');
-    phraseIndex++;
-  }
-  showPhrase();
-  setInterval(showPhrase, 6000);
-
-  // Popup programme fidélité
-  const loyaltyOverlay = document.getElementById('loyalty-modal-overlay');
-  document.getElementById('loyalty-open-btn').addEventListener('click', () => loyaltyOverlay.classList.add('open'));
-  document.getElementById('loyalty-close-btn').addEventListener('click', () => loyaltyOverlay.classList.remove('open'));
-  loyaltyOverlay.addEventListener('click', e => { if (e.target === loyaltyOverlay) loyaltyOverlay.classList.remove('open'); });
-  document.getElementById('loyalty-form').addEventListener('submit', e => {
-    e.preventDefault();
-    alert('Merci ! Vous êtes inscrit au programme fidélité 🌟');
-    loyaltyOverlay.classList.remove('open');
-  });
 
   function tripCardHTML(trip) {
     return `

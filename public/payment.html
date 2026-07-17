@@ -37,18 +37,8 @@
 <section>
   <div class="container" style="max-width:640px;">
     <h1>Paiement</h1>
-    <div class="page-hero-img" style="height:110px; background-image:url('/images/illustrations/money-bg.svg');">
-      <div class="page-hero-caption">Paiement sécurisé en Ariary</div>
-    </div>
     <div class="card">
       <h3 class="mt-0">Récapitulatif</h3>
-      <div class="trip-recap-card" id="pay-trip-card" style="display:none; margin-bottom:14px;">
-        <img id="pay-trip-img" alt="" class="trip-recap-img">
-        <div>
-          <p class="muted" id="pay-trip-route" style="margin:0 0 4px; font-weight:600;"></p>
-          <p class="muted" id="pay-trip-driver" style="margin:0; font-size:.85rem;"></p>
-        </div>
-      </div>
       <div id="summary-lines"></div>
       <div class="checkbox-row mt-2">
         <input type="checkbox" id="pay-insurance">
@@ -99,13 +89,6 @@
       renderLines();
     }).catch(() => renderLines());
 
-    document.getElementById('pay-trip-route').textContent = `${trip.departure} → ${trip.destination}`;
-    document.getElementById('pay-trip-driver').textContent = trip.driver ? `Chauffeur : ${trip.driver}` : '';
-    if (trip.image_url) {
-      document.getElementById('pay-trip-img').src = trip.image_url;
-      document.getElementById('pay-trip-card').style.display = 'flex';
-    }
-
     function renderLines() {
       const insurance = document.getElementById('pay-insurance').checked ? 2000 : 0;
       const total = subtotal - discount + insurance;
@@ -135,11 +118,9 @@
         payment_method: method,
         total: finalTotal,
         insurance: insurance,
-        promo_code: draft.promo || null,
-        travel_date: draft.travelDate || null
+        promo_code: draft.promo || null
       }).then(data => {
         localStorage.setItem('mb_last_reservation', data.id);
-        localStorage.setItem('mb_customer_phone', draft.phone);
         location.href = '/confirmation';
       }).catch(() => {
         alert('Erreur lors de la réservation.');
